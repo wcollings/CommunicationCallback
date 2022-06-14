@@ -1,6 +1,9 @@
 # Module setup
 This module is built to be fairly hands-off, from the Julia side anyways. Here's how to use it:
 
+Open a Julia console, type `]add https://github.com/wcollings/CommunicationCallback.git`, if this is the first time,
+or if it's already installed and you want to update it, just type `]up CommunicationCallback`
+
 In your Julia code:
 - do a `using CommunicationCallback`
 - In the callback initialization section of your code, add a communication callback variable. This is initializied by the function: 
