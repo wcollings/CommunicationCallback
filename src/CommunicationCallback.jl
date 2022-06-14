@@ -18,15 +18,13 @@ function cbfun(u::Vector{Float64},t,int)
 	global dv
 	global ind
 	global func
-	#println("In the right handler")
-	#println(methods(func))
+	res=u
 	try
 		res=func(u,t, int)
 	catch
 		stacktrace(catch_backtrace())
 	end
 	#println("output_fn executed fine")
-	res=u
 	for i=1:length(u)
 		dv[i+1,ind]=res[i]
 	end
