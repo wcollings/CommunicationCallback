@@ -1,4 +1,5 @@
 module CommunicationCallback
+using TimerOutputs
 
 using DiffEqCallbacks
 using ZMQ
@@ -11,6 +12,7 @@ soc = Nothing
 signal = Nothing
 send_t = true
 func = Nothing
+round_to_eight = (x) -> convert(Int,8*ceil(log(x)/log(8)))
 
 function cbfun(u::Vector{Float64},t,int)
 	global send_t
@@ -35,6 +37,9 @@ function cbfun(u::Vector{Float64},t,int)
 		#print("sending data...")
 		s_len=length(signal[1])
 		tn="t"*" "^(s_len-1)
+		print("---")
+		print(tn)
+		println("---")
 		msg=Vector{UInt8}(tn)
 		append!(msg,reinterpret(UInt8, dv[1,:]))
 		send(soc,Message(msg))
@@ -103,7 +108,7 @@ function comm(sig,buffSize::Int, addr::Int64, send_t=true, f=Nothing)
 		end
 	end
 	for i=1:length(sig)
-		l=max_len-length(sig[i])
+		l=round_to_eight(max_len)-length(sig[i])
 		sig[i]*=" "^l
 	end
 	# setup the syncronizer
@@ -116,7 +121,8 @@ function comm(sig,buffSize::Int, addr::Int64, send_t=true, f=Nothing)
 	#println("listening...")
 	while subs == 0
 		msg=recv(syncservice,String)
-		send(syncservice,Message(report))
+		msg1=Message(report)
+		send(syncservice,msg1)
 		subs+=1
 	end
 	#println("all subs connected")
@@ -137,7 +143,7 @@ function comm(sig,buffSize::Int, addr::Int64, send_t=true, f=Nothing)
 	global signal=sig
 	global func=f
 	global sync = syncservice
-	FunctionCallingCallback(cbfun,func_everystep=true)
+	@timeit "CommunicationCallback" FunctionCallingCallback(cbfun,func_everystep=true)
 end
 function stop()
 		@async send(soc, "done")
