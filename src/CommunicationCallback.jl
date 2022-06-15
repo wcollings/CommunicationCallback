@@ -3,7 +3,7 @@ using TimerOutputs
 
 using DiffEqCallbacks
 using ZMQ
-export comm, pub_setup
+export comm, pub_setup, soc
 size=10000
 #dv=Vector{Float64}(undef,2*size) # data vector
 dv= Nothing
@@ -37,9 +37,6 @@ function cbfun(u::Vector{Float64},t,int)
 		#print("sending data...")
 		s_len=length(signal[1])
 		tn="t"*" "^(s_len-1)
-		print("---")
-		print(tn)
-		println("---")
 		msg=Vector{UInt8}(tn)
 		append!(msg,reinterpret(UInt8, dv[1,:]))
 		send(soc,Message(msg))
@@ -53,7 +50,6 @@ function cbfun(u::Vector{Float64},t,int)
 				stacktrace(catch_backtrace())
 			end
 		end
-		println("done")
 	end
 end
 
@@ -134,9 +130,6 @@ function comm(sig,buffSize::Int, addr::Int64, send_t=true, f=Nothing)
 	else
 		global dv=Vector{Float64}(undef, size)
 	end
-	print("dv=")
-	print(typeof(dv))
-	print('\n')
 	global soc=socMaster
 	global size=buffSize
 	global send_t=send_t
@@ -145,8 +138,11 @@ function comm(sig,buffSize::Int, addr::Int64, send_t=true, f=Nothing)
 	global sync = syncservice
 	@timeit "CommunicationCallback" FunctionCallingCallback(cbfun,func_everystep=true)
 end
-function stop()
-		@async send(soc, "done")
+
+function __init__()
+	atexit() do 
+		send(soc, "done")
+		print("done")
+	end
 end
-Base.atexit(stop)
 end # module
