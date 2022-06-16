@@ -15,7 +15,7 @@ In your Julia code:
 You actually talk with the program with the following sequence:
 1. `connect` with SUB socket on selected address
 2. `connect` with REQ socket on selected address + 1
-3. select signals to subscribe to
+3. select signals to subscribe to (don't forget *t* for time and *done* as mentioned at the end!)
 4. send test string over REQ socket, to establish that a connection has been made
 	 - just send a blank string or a single space or something small like that
 5. receive a reply on REQ socket
