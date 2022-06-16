@@ -1,21 +1,22 @@
 # Module setup
-This module is built to be fairly hands-off, from the Julia side anyways. Here's how to use it:
+This module is built to be fairly hands-off, from the solver side anyways. Here's how to use it:
 
-Open a Julia console, type `]add https://github.com/wcollings/CommunicationCallback.git`, if this is the first time,
-or if it's already installed and you want to update it, just type `]up CommunicationCallback`
+- clone the repo
+- `make` and `make install` the project. On windows, you'll need `mingw32-make` instead of simply `make`
+  - you may need to change some install directories, `INST_INC_DIR` should point to your msys64 folder->usr->include, and `INST_LIB_DIR` to your msys64 folder->usr->lib
 
 In your Julia code:
-- do a `using CommunicationCallback`
-- In the callback initialization section of your code, add a communication callback variable. This is initializied by the function: 
-`comm(sig::Vector{String}|String, BufferSize::Int,Addr:Int,send_time_signals::Bool,translation_function::Function)`
-	- Check the documentation (hover over the function name) to see the specifics of each one.
-- Then just add it to the list of callbacks!
+- do a `#include <c_comm.h>`
+- In the initialization section of your main function, call `comm_setup()`
+  - Check the documentation for the specifics of the arguments for this
+- In the execution loop, put `comm_log_data(&integrator)` in there somewhere. It handles everything else internally!
+- In the cleanup section (after the execution loop), add `comm_cleanup();`
 
 # Communication Protocol
 You actually talk with the program with the following sequence:
 1. `connect` with SUB socket on selected address
 2. `connect` with REQ socket on selected address + 1
-3. select signals to subscribe to
+3. select signals to subscribe to (don't forget to add *t* and *done* as well!)
 4. send test string over REQ socket, to establish that a connection has been made
 	 - just send a blank string or a single space or something small like that
 5. receive a reply on REQ socket
