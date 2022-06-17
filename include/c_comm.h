@@ -8,9 +8,8 @@
 #include <assert.h>
 #include <math.h>
 #include <stdio.h>
-#include <errno.h>
+#include <types.h>
 
-#define STR_BUFF_SIZE (int)80
 
 struct data_buff{
 	int index;
@@ -18,13 +17,14 @@ struct data_buff{
 	int size;
 	int sig_name_len;
 	void * soc;
-	void (*map)(void *, double *);
+	int (*map)(IntegratorType *, realtype *);
 	char ** sigs;
 	double ** data;
 };
 
 extern struct data_buff buff;
 extern void * ctx;
+extern struct sig_names names;
 
 #define ROUND_TO_EIGHT(x) (int) 8*ceil(log(x)/log(8))
 /**
@@ -37,14 +37,14 @@ extern void * ctx;
  * @param addr the address for the PUB socket to work on
  * @param f the mapping function between Integrator's results and the output variables
  */
-void comm_setup(char * sigs[], int num_sigs, int buffSize,int addr, void (*f)(void *, double *));
+void comm_setup(int buffSize,int addr, int (*f)(IntegratorType *, realtype *));
 
 /**
  * @brief the intermediary save data function. Records data until the buffer is full, then transmits said data
  * 
  * @param Integrator the solver being used
  */
-void comm_log_data(void * Integrator);
+void comm_log_data(IntegratorType * Integrator);
 
 /**
  * @brief deconstructor for the comm module
