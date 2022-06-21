@@ -13,6 +13,8 @@ signal = Nothing
 send_t = true
 func = Nothing
 round_to_eight = (x) -> convert(Int,8*ceil(log(x)/log(8)))
+last_time= Nothing
+curr_time=Nothing
 
 function cbfun(u::Vector{Float64},t,int)
 	global send_t
@@ -20,6 +22,9 @@ function cbfun(u::Vector{Float64},t,int)
 	global dv
 	global ind
 	global func
+	global curr_time
+	global last_time
+	curr_time=time_ns()
 	res=u
 	try
 		res=func(u,t, int)
@@ -34,27 +39,32 @@ function cbfun(u::Vector{Float64},t,int)
 	ind+=1
 	if ind == size+1
 		ind=1
-		#print("sending data...")
-		s_len=length(signal[1])
-		tn="t"*" "^(s_len-1)
-		msg=Vector{UInt8}(tn)
-		append!(msg,reinterpret(UInt8, dv[1,:]))
-		send(soc,Message(msg))
-		for i=2:length(signal)
-			try
-				msg=Vector{UInt8}(signal[i-1])
-				append!(msg,reinterpret(UInt8, dv[i,:]))
-				#msg=output(signal[i-1],dv[i,:])
-				send(soc,Message(msg))
-			catch
-				stacktrace(catch_backtrace())
-			end
-		end
+		transmit()
 	end
+	last_time=time()
 end
 
 
-
+function transmit()
+	if (curr_time-last_time > 100000)
+		global size /= 1.25
+	end
+	s_len=length(signal[1])
+	tn="t"*" "^(s_len-1)
+	msg=Vector{UInt8}(tn)
+	append!(msg,reinterpret(UInt8, dv[1,:]))
+	send(soc,Message(msg))
+	for i=2:length(signal)
+		try
+			msg=Vector{UInt8}(signal[i-1])
+			append!(msg,reinterpret(UInt8, dv[i,:]))
+			#msg=output(signal[i-1],dv[i,:])
+			send(soc,Message(msg))
+		catch
+			stacktrace(catch_backtrace())
+		end
+	end
+end
 
 function cbfun(u::Float64,t::Float64,int)
 	global dv
